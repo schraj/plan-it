@@ -102,7 +102,8 @@ layer before broadening.
 - [x] **Phase 1 — Greenfield setup** (scaffold, DB, auth, day-one knowledge artifacts)
 - [x] **Phase 2 — Vertical slice** (auth → household → person → event → week view +
       same-person conflict warning). Verified end-to-end in a browser.
-- [ ] Phase 3 — Headline feature: coverage-conflict engine (3.3 demo)
+- [x] **Phase 3 — Headline feature: coverage-conflict engine (3.3 demo).** Verified
+      end-to-end (unit tests + browser).
 - [ ] Phase 4 — Seeded timezone bug + fix (3.4 demo)
 - [ ] Phase 5 — Seeded DST debugging mystery (3.5 demo)
 - [ ] Phase 6 — Review + docs (3.6 / 3.7 demos)
@@ -135,6 +136,43 @@ seeded on day one.
 **Notes / debts:** create-only (no edit/delete yet); date handling is local-tz and is
 the intended home of the upcoming bug/debug demos.
 
+## Review — Phase 3 (coverage-conflict engine, the §3.3 feature demo)
+
+**What shipped:** The headline feature — *coverage* conflict detection. The week view now
+flags when overlapping kid events outnumber the caregivers free to drive/supervise them,
+distinct from the existing same-person double-booking warning.
+
+**Built in 4 commit-sized steps (with tests, per §3.3):**
+1. **`Person.canDrive`** (Boolean, default false) — caregiver vs. dependent. Decoupled from
+   the User link (a teen may drive; a logged-in grandparent may not). Household creator
+   defaults to `canDrive=true`; everyone else opt-in via the add-person checkbox.
+2. **Pure engine** in `conflicts.ts`: `findCoverageConflicts` (sweep-line supply/demand),
+   `coverageConflictEventIds`, `coverageReasonByEvent`. An event "needs coverage" if it has
+   a dependent attendee and no caregiver along; conflict when, over any overlapping window,
+   `#events-needing-coverage > #free-caregivers`. **12 unit tests, zero new deps** —
+   `node --test` (Node 22.18+ strips TS types). `npm test`.
+3. **Week view**: amber border + "⚠ no driver free" badge + reason ("N events need a driver,
+   only M free"), distinct from the red double-booking treatment; red wins when both apply.
+
+**Conflict semantics locked (was the open decision):** caregiver = `canDrive`; coverage =
+supply-vs-demand of *free* caregivers (not bare overlap, not per-event named drivers).
+v1 simplification documented: instantaneous peak-concurrency check, not a full interval
+assignment solver — nails the headline, defers exotic chained-overlap cases.
+
+**Verification:**
+- ✅ `npm test` — 12/12 (headline, accompanied-dependent, demand==supply, busy-caregiver,
+  all-adult, all-day, non-overlap, reason string). `tsc --noEmit` + `lint` clean.
+- ✅ Browser (`scripts/verify-coverage.mjs`): two overlapping unaccompanied kid events, one
+  caregiver → **both amber "no driver free", zero red** (Maya/Sam share no person, so it's
+  purely coverage); add a 2nd caregiver → warning clears. `/tmp/plan-it-coverage*.png`.
+- ✅ No regression: `scripts/verify-golden-path.mjs` (same-person red conflict) still PASS.
+
+**Incidental fix:** `createHousehold`'s nested Person create used a scalar FK (`userId`);
+the Prisma 7 client requires the relation form (`user: { connect: { id } }`). Fixed. See
+`tasks/lessons.md`.
+
+**Knowledge updated:** `_knowledge/{data-model,scheduling,ui}.md`.
+
 ## Restarting a session here
 
 Fresh session is auto-oriented: `CLAUDE.md` loads on start and points at `_knowledge/`
@@ -146,5 +184,6 @@ and this file. To run locally:
 4. `npm run dev` → http://localhost:3000
 5. Verify with `node scripts/verify-golden-path.mjs` (server must be running)
 
-**Next up: Phase 3** — coverage-conflict engine ("two kids, overlapping pickups, one
-free parent"), built step-by-step with tests (the §3.3 feature-building demo).
+**Next up: Phase 4** — seeded timezone all-day-event bug + fix (the §3.4 bug-fixing demo).
+Date handling lives in `createEvent` (local-tz `new Date(\`${date}T${start}\`)`) and the
+week view's `isSameDay` grouping — see `_knowledge/scheduling.md`.
