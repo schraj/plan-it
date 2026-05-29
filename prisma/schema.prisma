@@ -1,0 +1,145 @@
+// plan-it schema. SQLite locally; kept Postgres-portable.
+// Note: SQLite has no native enums — roles are strings ("ADMIN" | "MEMBER").
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================================
+// Auth.js (NextAuth) models — adapter-compatible.
+// Credentials login uses User.passwordHash + JWT sessions.
+// Account/Session/VerificationToken kept for future OAuth.
+// ============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String? // set for credential logins; null for OAuth-only
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts    Account[]
+  sessions    Session[]
+  memberships Membership[]
+  person      Person? // optional 1:1 link to a schedulable household Person
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ============================================================
+// Domain models
+// ============================================================
+
+/// The tenant. Everything user-facing scopes to a Household.
+model Household {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  persons     Person[]
+  events      Event[]
+}
+
+/// Join of User <-> Household with a role. A User can belong to many
+/// households (e.g. co-parents across two homes); a Household has many users.
+model Membership {
+  id          String   @id @default(cuid())
+  role        String   @default("MEMBER") // "ADMIN" | "MEMBER"
+  userId      String
+  householdId String
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, householdId])
+}
+
+/// Someone whose schedule is tracked. Kids are managed Persons with no login
+/// (userId null); people who log in link to a User. This split is what makes
+/// conflict detection work for family members who don't have accounts.
+model Person {
+  id          String  @id @default(cuid())
+  name        String
+  color       String? // hex used to tint this person in the week view
+  householdId String
+  userId      String? @unique // optional link to a login account
+
+  household   Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attendances EventAttendee[]
+
+  @@index([householdId])
+}
+
+/// A scheduled thing, owned by a Household, attended by one or more Persons.
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  startsAt    DateTime // stored UTC
+  endsAt      DateTime // stored UTC
+  allDay      Boolean  @default(false)
+  householdId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  household Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  attendees EventAttendee[]
+
+  @@index([householdId, startsAt])
+}
+
+/// Event <-> Person many-to-many. Conflicts are computed from these overlaps;
+/// they are never stored.
+model EventAttendee {
+  eventId  String
+  personId String
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, personId])
+}
