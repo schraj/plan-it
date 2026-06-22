@@ -1,13 +1,42 @@
 @AGENTS.md
 
-# plan-it
+# claude-dev-workflow
 
-A family schedule-sync app. One household, several people, one shared view of who's
-doing what — with **conflict detection** as the headline feature (it warns when family
-members are double-booked, and eventually when caregiving coverage is short).
+This repo is a **learning tool for the Claude Code development process**. The product
+under construction — **plan-it**, a family schedule-sync app — is the *specimen*: a
+real multi-user app whose build is run, phase by phase, to demonstrate the workflows
+in `outline.md` ("Claude in the Developer Workflow"). Each build phase maps to a
+Section 3 workflow. The app exists to make the process concrete; the process is the
+point.
 
-This repo also doubles as a teaching vehicle for `outline.md` ("Claude in the Developer
-Workflow"). Each build phase maps to a Section 3 workflow.
+(plan-it itself: one household, several people, one shared view of who's doing what —
+with **conflict detection** as the headline feature, warning when family members are
+double-booked and when caregiving coverage is short.)
+
+## The Claude Code development process
+
+This is the spine of the workflow this repo teaches. It's deliberately terse —
+`outline.md` is the full narrative (mindset §1, setup §2, the core workflows §3).
+Treat these as the house rules for every task here:
+
+1. **Guide and judge — don't passenger.** You are the senior engineer. Claude does
+   the typing; you own the requirements, the tradeoffs, and the verification. Hand
+   it real artifacts (specs, tickets, docs), not thin verbal briefs.
+2. **Plan before code.** For anything non-trivial (3+ steps), use Plan mode and argue
+   the decomposition, interfaces, and non-goals in text *before* there's a diff to
+   defend. Be explicit about what NOT to build.
+3. **Read `_knowledge/` first, update it after.** Orientation persists here. A task
+   on top of thin knowledge produces thin work — build the knowledge file first.
+4. **Implement step by step.** Land a sizeable change as commit-sized steps you can
+   review independently, not one big run. Small diffs, small blast radius.
+5. **Verify before "done."** Tests passing ≠ feature working. Run the app, exercise
+   the golden path and the obvious edges, watch logs/UI. Prove it.
+6. **Close the loop.** New pattern, module, or decision worth remembering → write it
+   back into `_knowledge/` (and `tasks/lessons.md` after any correction). The next
+   task starts smarter.
+
+Per-workflow patterns (greenfield, existing-repo, feature, bug, debug, review, docs)
+live in `outline.md` §3 — read the matching section before that kind of task.
 
 ## Before you start a task
 
