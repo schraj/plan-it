@@ -15,10 +15,28 @@ likely place for a subtle bug).
 Verified (Playwright): overlapping events sharing a person → both flagged; overlapping
 events with NO shared person → no conflict.
 
-**The headline feature still to build (outline 3.3):** *coverage* conflicts — e.g. two
-kids need rides at overlapping times but only one adult is free. That's a different
-shape (it reasons about who can supervise/drive, not just attendee overlap) and is the
-planned step-by-step feature demo.
+## Coverage detection — also in `src/lib/conflicts.ts` (the headline feature)
+
+A *coverage* conflict reasons about **supply vs. demand for caregivers**, not bare
+attendee overlap. Driven by `Person.canDrive` (see `data-model.md`).
+
+- An event **needs coverage** when it has ≥1 dependent attendee (a non-`canDrive` Person)
+  AND **no** caregiver already attending (an unaccompanied kid). If an adult is on the
+  event, it's covered — but that adult is now occupied.
+- A caregiver is **occupied** during any event they attend (own commitment or accompanying).
+- Over any overlapping window: conflict when `#events-needing-coverage > #free-caregivers`.
+
+API (all pure): `findCoverageConflicts(events, persons)` → `CoverageConflict[]`
+(`{eventIds, window, demand, supply}`); `coverageConflictEventIds(cs)` → `Set<id>`;
+`coverageReasonByEvent(cs)` → `Map<id, string>` for the week-view badge.
+
+**v1 simplification (intentional):** it's a sweep-line, per-sub-interval *peak-concurrency*
+check, not a full interval-assignment solver. Nails the headline ("two kids, one car,
+overlapping pickups"); exotic chained-overlap puzzles are out of v1 scope.
+
+Tested in `src/lib/conflicts.test.ts` (`node --test`, run via `npm test` — zero deps,
+Node 22.18+ strips TS types). Covers the headline, accompanied-dependent, demand==supply,
+busy-caregiver, all-adult, all-day, and non-overlap cases.
 
 ## Week view — `src/components/WeekView.tsx`, `src/lib/week.ts`
 

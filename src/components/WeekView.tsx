@@ -1,11 +1,24 @@
 import { format } from "date-fns";
-import { conflictingEventIds, findConflicts } from "@/lib/conflicts";
+import {
+  conflictingEventIds,
+  coverageConflictEventIds,
+  coverageReasonByEvent,
+  findConflicts,
+  findCoverageConflicts,
+} from "@/lib/conflicts";
 import type { Household } from "@/lib/session";
 import { eventsOnDay, weekDays } from "@/lib/week";
 
 export function WeekView({ household }: { household: Household }) {
   const days = weekDays();
   const conflictIds = conflictingEventIds(findConflicts(household.events));
+
+  // Coverage conflicts (the headline feature): not enough free caregivers to
+  // drive/supervise overlapping kid events. Surfaced distinctly from the red
+  // same-person double-booking above.
+  const coverageConflicts = findCoverageConflicts(household.events, household.persons);
+  const coverageIds = coverageConflictEventIds(coverageConflicts);
+  const coverageReasons = coverageReasonByEvent(coverageConflicts);
 
   const colorOf = new Map(
     household.persons.map((p) => [p.id, p.color ?? "#6b7280"]),
@@ -29,14 +42,17 @@ export function WeekView({ household }: { household: Household }) {
               )}
               {dayEvents.map((event) => {
                 const inConflict = conflictIds.has(event.id);
+                const noCoverage = coverageIds.has(event.id);
+                // Red double-booking takes visual precedence; amber otherwise.
+                const cardClass = inConflict
+                  ? "border-red-400 bg-red-50"
+                  : noCoverage
+                    ? "border-amber-400 bg-amber-50"
+                    : "border-gray-200 bg-gray-50";
                 return (
                   <div
                     key={event.id}
-                    className={`rounded border p-2 text-xs ${
-                      inConflict
-                        ? "border-red-400 bg-red-50"
-                        : "border-gray-200 bg-gray-50"
-                    }`}
+                    className={`rounded border p-2 text-xs ${cardClass}`}
                   >
                     <div className="font-medium">{event.title}</div>
                     <div className="text-gray-500">
@@ -56,6 +72,16 @@ export function WeekView({ household }: { household: Household }) {
                     {inConflict && (
                       <div className="mt-1 font-medium text-red-600">
                         ⚠ conflict
+                      </div>
+                    )}
+                    {noCoverage && (
+                      <div className="mt-1">
+                        <div className="font-medium text-amber-700">
+                          ⚠ no driver free
+                        </div>
+                        <div className="text-amber-600">
+                          {coverageReasons.get(event.id)}
+                        </div>
                       </div>
                     )}
                   </div>

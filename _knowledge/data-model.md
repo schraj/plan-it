@@ -12,6 +12,11 @@ Source of truth: `prisma/schema.prisma`. SQLite locally (Postgres-portable).
   Kids are managed Persons with `userId = null` (no login). People who log in link via
   `Person.userId` (unique, optional). This split is what lets us schedule and
   conflict-check family members who don't have accounts.
+  - `canDrive: Boolean` (default `false`) — whether this Person can drive/supervise, i.e.
+    provide *coverage*. **Deliberately decoupled from the User link**: a teen with no login
+    might drive, and a logged-in grandparent might not. The household creator is defaulted
+    to `canDrive = true` (they're the adult standing it up); everyone else is opt-in via the
+    add-person checkbox. Drives the coverage-conflict engine (see `_knowledge/scheduling.md`).
 - **Event** — owned by a Household; `startsAt`/`endsAt` stored UTC; `allDay` flag.
 - **EventAttendee** — Event ↔ Person many-to-many. Conflicts are derived from these.
 

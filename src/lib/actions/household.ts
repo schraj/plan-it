@@ -23,7 +23,14 @@ export async function createHousehold(formData: FormData) {
       name,
       memberships: { create: { userId: user.id, role: "ADMIN" } },
       persons: {
-        create: { name: user.name ?? "Me", userId: user.id, color: pickColor(0) },
+        // The person standing up the household is the adult — default them to a
+        // caregiver so coverage detection works out of the box.
+        create: {
+          name: user.name ?? "Me",
+          user: { connect: { id: user.id } },
+          color: pickColor(0),
+          canDrive: true,
+        },
       },
     },
   });
@@ -31,7 +38,11 @@ export async function createHousehold(formData: FormData) {
   revalidatePath("/");
 }
 
-const personSchema = z.object({ name: z.string().min(1) });
+const personSchema = z.object({
+  name: z.string().min(1),
+  // Unchecked checkboxes are absent from FormData; "on" means checked.
+  canDrive: z.preprocess((v) => v === "on", z.boolean()),
+});
 
 /** Add a schedulable person (e.g. a child with no login) to the household. */
 export async function addPerson(formData: FormData) {
@@ -41,12 +52,16 @@ export async function addPerson(formData: FormData) {
   const household = await getHouseholdForUser(user.id);
   if (!household) throw new Error("No household");
 
-  const parsed = personSchema.safeParse({ name: formData.get("name") });
+  const parsed = personSchema.safeParse({
+    name: formData.get("name"),
+    canDrive: formData.get("canDrive"),
+  });
   if (!parsed.success) return;
 
   await prisma.person.create({
     data: {
       name: parsed.data.name,
+      canDrive: parsed.data.canDrive,
       householdId: household.id,
       color: pickColor(household.persons.length),
     },

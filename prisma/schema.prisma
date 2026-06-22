@@ -105,6 +105,7 @@ model Person {
   id          String  @id @default(cuid())
   name        String
   color       String? // hex used to tint this person in the week view
+  canDrive    Boolean @default(false) // can drive/supervise — i.e. provide coverage
   householdId String
   userId      String? @unique // optional link to a login account
 

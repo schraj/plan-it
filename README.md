@@ -1,21 +1,56 @@
-# plan-it
+# claude-dev-workflow
 
-A family schedule-sync app. One household, several people, one shared view of who's
-doing what — with **conflict detection** that warns when family members are
-double-booked.
+A hands-on lab for the **Claude Code development process**. The point of this repo
+isn't the app — it's the *workflow*: how you drive Claude through greenfield setup,
+feature building, bug fixing, debugging, code review, and documentation as a senior
+engineer who guides and verifies, rather than a passenger.
 
-This repo also doubles as a worked example for `outline.md` ("Claude in the Developer
-Workflow"): each build phase demonstrates one of the Section 3 Claude-Code workflows.
-The plan and progress live in [`tasks/todo.md`](tasks/todo.md); area docs live in
-[`_knowledge/`](_knowledge/); conventions and stack gotchas live in
-[`CLAUDE.md`](CLAUDE.md).
+The full narrative lives in [`outline.md`](outline.md) ("Claude in the Developer
+Workflow" — blog post + workshop). This repo is its worked example: a real
+multi-user app, built phase by phase, where each phase *demonstrates* one of the
+Section 3 workflows so you can read the prose and then see it land in actual commits,
+knowledge docs, and plans.
 
-## Stack
+## How to use this repo
 
-Next.js 16 (App Router) · React 19 · Auth.js v5 (Credentials + JWT) · Prisma 7 + SQLite
-· Tailwind v4 · date-fns.
+1. **Read [`outline.md`](outline.md)** — the mindset (Section 1), setup (Section 2),
+   and the core workflows (Section 3).
+2. **Read [`CLAUDE.md`](CLAUDE.md)** — the development process is documented at the
+   top, followed by the project's own conventions. This is the "persistent project
+   brain" pattern in action.
+3. **Walk the phased commits** — each maps to a workflow (table below). Check out a
+   phase, read the diff, then read the matching `outline.md` section.
+4. **Replay a workflow yourself** — reset to a phase and try driving Claude through
+   it. Compare what you get to what's committed.
+5. **Watch the artifacts** — [`_knowledge/`](_knowledge/) (the growing knowledge base),
+   [`tasks/todo.md`](tasks/todo.md) (planning), and [`tasks/lessons.md`](tasks/lessons.md)
+   (the self-improvement loop) are the workflow's outputs, not afterthoughts.
 
-## Local setup
+## Workflow → where to see it
+
+| Workflow (`outline.md` §3) | Where it shows up in this repo |
+|---|---|
+| Starting a new project (3.1) | The scaffold commit: stack chosen deliberately, `CLAUDE.md` + `_knowledge/` stood up on day one |
+| Working on an existing repo (3.2) | The `_knowledge/` files — orientation captured and grown per area |
+| Feature building (3.3) | The coverage-conflict engine phase — spec → plan → step-by-step implement → verify |
+| Bug fixing (3.4) | Timezone / all-day-event date bugs (see `tasks/`) |
+| Debugging (3.5) | Conflicts missed across a DST boundary |
+| Code review (3.6) | Household-isolation / tenant-authz review |
+| Documentation & planning (3.7) | `_knowledge/auth.md` and the auth + isolation write-ups |
+
+## The specimen: `plan-it`
+
+The app under the microscope is **plan-it** — a family schedule-sync app. One
+household, several people, one shared view of who's doing what, with **conflict
+detection** as the headline feature: it warns when family members are double-booked,
+and when caregiving coverage is short ("two kids, one car, overlapping pickups").
+It's a real app on purpose — a genuine multi-user product generates the auth,
+tenancy, date-math, and authz problems that make the workflow demos authentic.
+
+**Stack:** Next.js 16 (App Router) · React 19 · Auth.js v5 (Credentials + JWT) ·
+Prisma 7 + SQLite · Tailwind v4 · date-fns.
+
+## Running the specimen
 
 ```bash
 npm install

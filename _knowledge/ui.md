@@ -14,10 +14,13 @@ Plain Tailwind v4 (no component library yet — shadcn/ui is a candidate later).
 ## Components (`src/components`)
 
 - `WeekView` — server component; takes the `Household` and renders the 7-day grid with
-  conflict highlighting.
+  conflict highlighting. Two distinct signals: **red border + "⚠ conflict"** for same-person
+  double-booking, and **amber border + "⚠ no driver free"** (plus a reason line) for coverage
+  conflicts. Red takes visual precedence when an event hits both.
 - `AddPersonForm`, `AddEventForm` — plain `<form action={serverAction}>` (progressive
   enhancement; no client JS needed). `AddEventForm` lists household persons as checkboxes
-  named `personIds`.
+  named `personIds`. `AddPersonForm` has a "can drive / supervise" checkbox named `canDrive`
+  (drives coverage detection; unchecked = a dependent/kid).
 
 ## Server actions (`src/lib/actions`)
 
