@@ -26,6 +26,14 @@ knowledge docs, and plans.
    [`tasks/todo.md`](tasks/todo.md) (planning), and [`tasks/lessons.md`](tasks/lessons.md)
    (the self-improvement loop) are the workflow's outputs, not afterthoughts.
 
+### Global setup: `Global-claude.md`
+
+[`Global-claude.md`](Global-claude.md) is a portable, project-agnostic Claude Code
+config (Boris Cherny's global `CLAUDE.md` — workflow orchestration, task management,
+and core principles). It isn't read by this repo; it's meant for *your* global config.
+Copy its contents into your developer-level instructions at `~/.claude/CLAUDE.md` so
+the same workflow defaults apply across all your projects.
+
 ## Workflow → where to see it
 
 | Workflow (`outline.md` §3) | Where it shows up in this repo |
